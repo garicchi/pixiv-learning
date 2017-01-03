@@ -11,7 +11,7 @@ def __get_tags(url):
     root = lxml.html.fromstring(html)
     tags_t = root.cssselect('.tag')
     tags = [t.cssselect('.text')[0].text_content() for t in tags_t if t.text_content().count('users入り') == 0]
-    #time.sleep(1)
+    time.sleep(1)
     return tags
 
 def __get_ranking_illusts(mode:str,date:datetime.date):
