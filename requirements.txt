@@ -1,0 +1,4 @@
+cssselect==1.0.0
+lxml==3.7.1
+python-dateutil==2.6.0
+requests==2.12.4
