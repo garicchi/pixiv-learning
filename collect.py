@@ -11,10 +11,12 @@ def __get_tags(url):
     root = lxml.html.fromstring(html)
     tags_t = root.cssselect('.tag')
     tags = [t.cssselect('.text')[0].text_content() for t in tags_t if t.text_content().count('users入り') == 0]
+    #time.sleep(1)
     return tags
 
 def __get_ranking_illusts(mode:str,date:datetime.date):
-    url = "http://www.pixiv.net/ranking.php?mode="+mode+"&date="+date.strftime("%Y%m%d")
+    date_str = date.strftime("%Y%m%d")
+    url = "http://www.pixiv.net/ranking.php?mode="+mode+"&date="+date_str
     with urllib.request.urlopen(url) as res:
         html = res.read().decode("utf-8")
 
@@ -28,10 +30,12 @@ def __get_ranking_illusts(mode:str,date:datetime.date):
         creator = ranking.cssselect('.icon-text')[0].text_content()
         tags = __get_tags(url)
         item = {
+            "date":date.strftime("%Y-%m-%d"),
             "rank":rank,
             "url":url,
             "title":title,
-            "creator":creator
+            "creator":creator,
+            "category":mode
         }
         for i in range(10):
             if i < len(tags):
@@ -56,27 +60,26 @@ def __write_line_csv(file:str,first:bool,content:dict):
         line = line.rstrip(',')
         f.write(line+"\n")
 
-
-def __walk_weekly(mode:str,csv:str,start_date:datetime.date,end_date:datetime.date,sleep):
+def __collect(csv:str,start_date:datetime.date,end_date:datetime.date):
     current_date = start_date
     first = True
+    start_time = time.time()
+    amount = 0
     while(current_date < end_date):
-        print('mode = %s current_date = %s ' % (mode,str(current_date)))
+        elapsed = time.time() - start_time
+        print('[%d SEC]\tDATE: %s\tAMOUNT: %d' % (elapsed,str(current_date),amount))
         current_date = current_date + relativedelta(months=1)
-        ranking = __get_ranking_illusts(mode,current_date)
-        for item in ranking:
+        ranking_male = __get_ranking_illusts('male',current_date)
+        ranking_female = __get_ranking_illusts('female', current_date)
+        ranking_male.extend(ranking_female)
+        amount += len(ranking_male)
+
+        for item in ranking_male:
             __write_line_csv(csv,first,item)
             first = False
-        print('sleep %d seconds' % sleep)
-        time.sleep(sleep)
-
-
 
 if __name__ == '__main__':
-    sleep = 60*5
-    male_csv = "male_ranking.csv"
-    female_csv = "female_ranking.csv"
-    __walk_weekly("male",male_csv,datetime.date(2014,1,1),datetime.date(2017,1,1),sleep)
-    __walk_weekly("female", female_csv, datetime.date(2014, 1, 1), datetime.date(2017, 1, 1),sleep)
+    csv = "pixiv.csv"
+    __collect(csv,datetime.date(2014,1,1),datetime.date(2017,1,1))
 
     print('job complete!')
