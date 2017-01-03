@@ -1,7 +1,8 @@
 import urllib.request
 import lxml.html
-import pprint
 import datetime
+import time
+from dateutil.relativedelta import relativedelta
 
 def __get_tags(url):
     with urllib.request.urlopen(url) as res:
@@ -56,25 +57,26 @@ def __write_line_csv(file:str,first:bool,content:dict):
         f.write(line+"\n")
 
 
-def __walk_weekly(mode:str,csv:str,start_date:datetime.date,end_date:datetime.date):
+def __walk_weekly(mode:str,csv:str,start_date:datetime.date,end_date:datetime.date,sleep):
     current_date = start_date
     first = True
     while(current_date < end_date):
-        print(str(current_date))
-        current_date = current_date + datetime.timedelta(weeks=1)
+        print('mode = %s current_date = %s ' % (mode,str(current_date)))
+        current_date = current_date + relativedelta(months=1)
         ranking = __get_ranking_illusts(mode,current_date)
         for item in ranking:
             __write_line_csv(csv,first,item)
             first = False
+        print('sleep %d seconds' % sleep)
+        time.sleep(sleep)
 
 
 
 if __name__ == '__main__':
+    sleep = 60*5
     male_csv = "male_ranking.csv"
     female_csv = "female_ranking.csv"
-    __walk_weekly("male",male_csv,datetime.date(2016,12,5),datetime.date(2015,6,5))
-    __walk_weekly("female", female_csv, datetime.date(2015, 5, 5), datetime.date(2015, 6, 5))
+    __walk_weekly("male",male_csv,datetime.date(2014,1,1),datetime.date(2017,1,1),sleep)
+    __walk_weekly("female", female_csv, datetime.date(2014, 1, 1), datetime.date(2017, 1, 1),sleep)
 
-    #ranks = __get_ranking_illusts("male",datetime.date(2015,5,4))
-    #pprint.pprint(ranks)
-    #__get_tags("http://www.pixiv.net/member_illust.php?mode=medium&illust_id=51719398")
+    print('job complete!')
